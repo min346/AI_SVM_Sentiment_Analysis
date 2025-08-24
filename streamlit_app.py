@@ -32,7 +32,7 @@ _ = _ensure_nltk()
 # ---- Load artifacts (model + vectorizer) ----
 @st.cache_resource
 def load_artifacts():
-    mdl = load("sentiment_model.joblib")
+    mdl = load("SVM.joblib")
     vect = load("tfidf_vectorizer.joblib")
     return mdl, vect
 
