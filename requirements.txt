@@ -1,1 +1,6 @@
 streamlit
+pandas
+nltk
+contractions
+scikit-learn
+joblib
