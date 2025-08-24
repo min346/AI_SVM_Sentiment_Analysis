@@ -74,7 +74,7 @@ with col2:
     clear_btn = st.button("🧹 Clear")
 
 if clear_btn:
-    st.experimental_rerun()
+    user_text = ""
 
 if predict_btn:
     if not user_text.strip():
