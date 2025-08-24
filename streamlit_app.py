@@ -70,11 +70,6 @@ user_text = st.text_area("✍️ Type a review here:", height=160, placeholder="
 col1, col2 = st.columns(2)
 with col1:
     predict_btn = st.button("🔮 Predict")
-with col2:
-    clear_btn = st.button("🧹 Clear")
-
-if clear_btn:
-    user_text = ""
 
 if predict_btn:
     if not user_text.strip():
