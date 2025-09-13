@@ -4,3 +4,4 @@ nltk
 contractions
 scikit-learn
 joblib
+plotly
