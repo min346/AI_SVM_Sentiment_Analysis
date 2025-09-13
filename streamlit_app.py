@@ -191,7 +191,7 @@ if page == "✍️ Review Prediction":
         'Positive', 'Negative', 'Positive', 'Negative', 'Positive'
     ]
     
-    # Generate dynamic predictions using the loaded model
+    # Generate bert predictions using the loaded model
     predicted_sentiments = []
     for review in demo_reviews:
         cleaned = clean_text(review)
@@ -218,7 +218,7 @@ if page == "✍️ Review Prediction":
         column_config={
             "Review": st.column_config.TextColumn("Review", width="large"),
             "Actual Sentiment": st.column_config.TextColumn("Actual Sentiment", width="medium"),
-            "Predicted Sentiment": st.column_config.TextColumn("Predicted Sentiment (Dynamic)", width="medium")
+            "Predicted Sentiment": st.column_config.TextColumn("Predicted Sentiment (BERT)", width="medium")
         }
     )
     
