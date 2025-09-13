@@ -271,3 +271,195 @@ if page == "✍️ Review Prediction":
         # Show the cleaned text (useful for demo)
         with st.expander("See cleaned text used for prediction"):
             st.code(st.session_state.last_cleaned_text)
+
+# ---- CSV Analysis Page ----
+elif page == "📁 CSV Analysis":
+    st.title("📁 CSV Analysis")
+    st.write("Upload a CSV file with reviews to analyze sentiment.")
+    
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+    
+    # Check if this is a new file or returning to previous results
+    if uploaded_file is not None:
+        current_file_name = uploaded_file.name
+        
+        # If it's a new file, process it
+        if (st.session_state.uploaded_file_name != current_file_name or 
+            st.session_state.csv_results is None):
+            
+            try:
+                # Read CSV with encoding detection
+                with st.spinner("Reading file and detecting encoding..."):
+                    df, encoding_used = read_csv_with_encoding(uploaded_file)
+                
+                st.success(f"✅ File uploaded successfully! Found {len(df)} rows.")
+                st.info(f"📝 Encoding detected: {encoding_used}")
+                
+                st.subheader("📋 Data Preview")
+                st.dataframe(df.head(10))
+                
+                # Check for review column
+                review_column = find_review_column(df)
+                
+                if review_column is None:
+                    st.subheader("📊 Analysis Results")
+                    st.error("❌ No review column found! Please make sure your CSV has a column named 'review', 'Review', or 'REVIEW'.")
+                    # Clear previous results
+                    st.session_state.csv_results = None
+                    st.session_state.csv_analysis_done = False
+                else:
+                    with st.spinner("Analyzing sentiments... This may take a moment for large files."):
+                        # Get texts from review column
+                        texts = df[review_column].tolist()
+                        
+                        # Predict sentiments
+                        sentiments = predict_batch(texts)
+                        
+                        # Create results dataframe
+                        results_df = df.copy()
+                        results_df['sentiment'] = sentiments
+                        
+                        # Add cleaned text column
+                        cleaned_texts = []
+                        for text in texts:
+                            if pd.isna(text) or str(text).strip() == '':
+                                cleaned_texts.append('')
+                            else:
+                                cleaned_texts.append(clean_text(str(text)))
+                        
+                        results_df['cleaned_review'] = cleaned_texts
+                        
+                        # Store in session state
+                        st.session_state.csv_results = results_df
+                        st.session_state.uploaded_file_name = current_file_name
+                        st.session_state.csv_analysis_done = True
+            
+            except Exception as e:
+                st.error(f"❌ Error processing file: {str(e)}")
+                st.markdown("""
+                **Possible solutions:**
+                - Make sure your file is a valid CSV
+                - Try saving your file with UTF-8 encoding
+                - Check if the file is corrupted
+                - Try a different CSV file format
+                
+                **Common issues:**
+                - File contains special characters or non-standard encoding
+                - File is not properly formatted as CSV
+                - File is too large or corrupted
+                """)
+                
+                # Provide encoding troubleshooting
+                if "codec can't decode" in str(e) or "encoding" in str(e).lower():
+                    st.markdown("""
+                    **Encoding Issue Detected:**
+                    Your file seems to have encoding problems. Try these steps:
+                    1. Open your CSV in Excel or Google Sheets
+                    2. Save it as "CSV UTF-8" format
+                    3. Upload the newly saved file
+                    """)
+                    
+                    # Show raw bytes for debugging
+                    if st.checkbox("🔧 Show file debugging info (Advanced)"):
+                        try:
+                            uploaded_file.seek(0)
+                            raw_bytes = uploaded_file.read(1000)
+                            st.code(f"First 1000 bytes: {raw_bytes}")
+                            
+                            # Try to detect encoding
+                            detected = chardet.detect(raw_bytes)
+                            st.write(f"Detected encoding: {detected}")
+                        except:
+                            st.write("Could not analyze file bytes")
+                # Clear results on error
+                st.session_state.csv_results = None
+                st.session_state.csv_analysis_done = False
+    
+    # Display results if they exist (either from new analysis or previous session)
+    if st.session_state.csv_results is not None and st.session_state.csv_analysis_done:
+        results_df = st.session_state.csv_results
+        
+        # Show results using Dashboard style
+        st.subheader("📊 Analysis Results")
+        
+        # Get sentiment counts (excluding unknown/empty for main analysis)
+        sentiment_counts = results_df['sentiment'].value_counts()
+        csv_positive = sentiment_counts.get('positive', 0)
+        csv_negative = sentiment_counts.get('negative', 0)
+        csv_unknown = sentiment_counts.get('unknown', 0)
+        
+        # Display current statistics (Dashboard style)
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Total Reviews", len(results_df))
+        
+        with col2:
+            st.metric("Positive Reviews", csv_positive)
+        
+        with col3:
+            st.metric("Negative Reviews", csv_negative)
+        
+        with col4:
+            st.metric("Unknown/Empty", csv_unknown)
+        
+        # Create visualizations (Dashboard style)
+        total_analyzed = csv_positive + csv_negative
+        
+        if total_analyzed > 0:
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Pie Chart
+                labels = ['Positive', 'Negative']
+                values = [csv_positive, csv_negative]
+                colors = ['#2E8B57', '#DC143C']
+                
+                fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.4)])
+                fig_pie.update_traces(marker=dict(colors=colors, line=dict(color='white', width=2)))
+                fig_pie.update_layout(title="Sentiment Distribution", font=dict(size=14), showlegend=True, height=400
+                )
+                st.plotly_chart(fig_pie, use_container_width=True)
+            
+            with col2:
+                # Bar Chart
+                fig_bar = go.Figure(data=[go.Bar(name='Sentiment', x=labels, y=values, marker_color=colors, text=values, textposition='auto')])
+                fig_bar.update_layout(title="Sentiment Count", xaxis_title="Sentiment", yaxis_title="Number of Reviews", height=400, showlegend=False)
+                st.plotly_chart(fig_bar, use_container_width=True)
+            
+            # Percentage breakdown
+            pos_percent = (csv_positive / total_analyzed) * 100
+            neg_percent = (csv_negative / total_analyzed) * 100
+            
+            st.markdown("### 📈 Analysis Summary")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.info(f"**Positive Reviews:** {pos_percent:.1f}% ({csv_positive} reviews)")
+            with col2:
+                st.info(f"**Negative Reviews:** {neg_percent:.1f}% ({csv_negative} reviews)")
+            
+            # Show unknown/empty info if any
+            if csv_unknown > 0:
+                unknown_percent = (csv_unknown / len(results_df)) * 100
+                st.warning(f"**Note:** {csv_unknown} reviews ({unknown_percent:.1f}%) were empty or could not be analyzed.")
+        
+        else:
+            st.info("📝 No valid reviews found for sentiment analysis.")
+        
+        # Show detailed results
+        st.subheader("📋 Detailed Results")
+        
+        # Filter options
+        sentiment_filter = st.selectbox("Filter by sentiment:", ['All', 'Positive', 'Negative', 'Unknown'])
+        
+        if sentiment_filter != 'All':
+            filtered_df = results_df[results_df['sentiment'] == sentiment_filter.lower()]
+        else:
+            filtered_df = results_df
+        
+        st.dataframe(filtered_df, use_container_width=True)
+        
+        # Download results
+        csv = results_df.to_csv(index=False)
+        st.download_button(label="📥 Download Results as CSV", data=csv, file_name="sentiment_analysis_results.csv", mime="text/csv"
+        )
