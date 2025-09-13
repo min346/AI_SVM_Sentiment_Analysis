@@ -5,3 +5,4 @@ contractions
 scikit-learn
 joblib
 plotly
+chardet
