@@ -1,19 +1,8 @@
-# 🎈 Blank app template
+https://min346-ai-bert-sentiment-analysis-app-56mow4.streamlit.app/
 
-A simple Streamlit app template for you to modify!
+**Purpose:** This website uses a BERT-based sentiment analysis model to identify whether a written review or comment is **positive**, **negative**, or **neutral**. It helps users quickly understand the overall opinion expressed in text.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+<img width="1577" height="744" alt="image" src="https://github.com/user-attachments/assets/5232c99a-d5a1-466e-a7ff-022b94e505c9" />
+<img width="737" height="380" alt="image" src="https://github.com/user-attachments/assets/e4f51fc6-e838-42a9-b3ed-6122ea191e96" />
 
-### How to run it on your own machine
-
-1. Install the requirements
-
-   ```
-   $ pip install -r requirements.txt
-   ```
-
-2. Run the app
-
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+**How to Use:** Enter or paste a review into the text input box, then click **Analyse Sentiment**. The system will display the predicted sentiment and its confidence score.
